@@ -27,16 +27,15 @@ async def register(request: RegisterRequest, db: Client = Depends(get_db)):
     Creates both a Supabase Auth user and a profile in the users table.
     """
     try:
-        # Create user in Supabase Auth
-        auth_response = db.auth.sign_up(
+        # Create user in Supabase Auth using Admin API to bypass SMTP rate limits and auto-confirm email
+        auth_response = db.auth.admin.create_user(
             {
                 "email": request.email,
                 "password": request.password,
-                "options": {
-                    "data": {
-                        "full_name": request.full_name,
-                        "role": request.role.value,
-                    }
+                "email_confirm": True,
+                "user_metadata": {
+                    "full_name": request.full_name,
+                    "role": request.role.value,
                 },
             }
         )
