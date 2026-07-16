@@ -12,6 +12,7 @@ import PatientRegistrationPage from "@/pages/PatientRegistrationPage"
 import PatientDetailsPage from "@/pages/PatientDetailsPage"
 import AIAssessmentPage from "@/pages/AIAssessmentPage"
 import ReportsPage from "@/pages/ReportsPage"
+import AnalyticsPage from "@/pages/AnalyticsPage"
 import AppLayout from "@/components/layout/AppLayout"
 
 /**
@@ -49,6 +50,7 @@ function App() {
         <Route path="patients/:id" element={<PatientDetailsPage />} />
         <Route path="assessment" element={<AIAssessmentPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
       </Route>
 
       {/* Catch-all redirect */}
