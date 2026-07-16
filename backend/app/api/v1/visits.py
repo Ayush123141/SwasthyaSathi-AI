@@ -159,3 +159,68 @@ async def get_patient_visits(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve visits: {str(e)}",
         )
+
+@router.post("/{visit_id}/assess", response_model=ApiResponse)
+async def generate_visit_assessment(
+    visit_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Client = Depends(get_db),
+):
+    """
+    Triggers the Explainable AI Assessment Engine for a given visit.
+    Runs rule engine, calls Gemini, and saves results to the visit record.
+    """
+    from app.services.ai.assessment_service import orchestrate_assessment
+    
+    try:
+        # Fetch the visit
+        visit_result = (
+            db.table("visits")
+            .select("*")
+            .eq("id", visit_id)
+            .single()
+            .execute()
+        )
+        if not visit_result.data:
+            raise HTTPException(status_code=404, detail="Visit not found")
+        visit_data = visit_result.data
+        
+        # Fetch the patient
+        patient_result = (
+            db.table("patients")
+            .select("*")
+            .eq("id", visit_data["patient_id"])
+            .single()
+            .execute()
+        )
+        patient_data = patient_result.data or {}
+
+        # Run Assessment Orchestrator
+        assessment = await orchestrate_assessment(visit_data, patient_data)
+        
+        # Update Visit with assessment data
+        update_payload = {
+            "ai_risk_level": assessment.get("risk_level", "Unknown").lower(),
+            "ml_confidence_score": float(assessment.get("confidence", 0)) / 100.0,
+            "emergency_flags": assessment.get("triggered_rules", []),
+            "ai_recommendation": assessment.get("recommended_action", ""),
+            "ai_explanation": assessment.get("clinical_summary", ""),
+            "referral_needed": assessment.get("referral_needed", False),
+            "referral_type": assessment.get("referral_type", "")
+        }
+        
+        db.table("visits").update(update_payload).eq("id", visit_id).execute()
+        
+        return ApiResponse(
+            success=True,
+            message="AI Assessment generated successfully",
+            data=assessment
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate assessment: {str(e)}",
+        )
