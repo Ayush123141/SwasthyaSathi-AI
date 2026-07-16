@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { 
   ArrowLeft, 
@@ -6,6 +6,7 @@ import {
   Activity, 
   Stethoscope, 
   Mic, 
+  MicOff,
   FileText, 
   CheckCircle2,
   ChevronRight,
@@ -32,6 +33,15 @@ export default function PatientRegistrationPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAssessing, setIsAssessing] = useState(false)
+  
+  // Voice State
+  const [isRecording, setIsRecording] = useState(false)
+  const [isTranscribing, setIsTranscribing] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  
+  // OCR State
+  const [isUploadingOCR, setIsUploadingOCR] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // State for form data
   const [formData, setFormData] = useState({
@@ -135,6 +145,93 @@ export default function PatientRegistrationPage() {
       setIsSubmitting(false)
       navigate("/patients")
     }, 1500)
+  }
+
+  const startVoiceDictation = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      
+      const audioChunks: BlobPart[] = []
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data)
+      }
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+        setIsTranscribing(true)
+        
+        const fd = new FormData()
+        fd.append('file', audioBlob, 'dictation.webm')
+        
+        try {
+          const res = await fetch('http://localhost:8000/api/v1/upload/voice', {
+            method: 'POST',
+            body: fd
+          })
+          const data = await res.json()
+          if (data.success && data.data.transcription) {
+            setFormData(prev => ({
+              ...prev,
+              symptoms: prev.symptoms ? prev.symptoms + ' ' + data.data.transcription : data.data.transcription
+            }))
+          }
+        } catch (err) {
+          console.error("Transcription failed", err)
+        } finally {
+          setIsTranscribing(false)
+          stream.getTracks().forEach(track => track.stop())
+        }
+      }
+      
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Microphone access denied", err)
+      alert("Microphone access is required for dictation.")
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setIsUploadingOCR(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/upload/ocr', {
+        method: 'POST',
+        body: fd
+      })
+      const data = await res.json()
+      if (data.success && data.data) {
+        const d = data.data
+        setFormData(prev => ({
+          ...prev,
+          sysBP: d.vitals?.blood_pressure?.split('/')[0] || prev.sysBP,
+          diaBP: d.vitals?.blood_pressure?.split('/')[1] || prev.diaBP,
+          temperature: d.vitals?.temperature || prev.temperature,
+          heartRate: d.vitals?.heart_rate || prev.heartRate,
+          spo2: d.vitals?.spo2 || prev.spo2,
+          symptoms: prev.symptoms + (d.extracted_text ? `\n\n[OCR Data]: ${d.extracted_text}` : '') + (d.medications ? `\n[Medications]: ${d.medications.join(', ')}` : '')
+        }))
+        alert("OCR Extracted successfully! Check vitals and symptoms.")
+      }
+    } catch (err) {
+      console.error("OCR upload failed", err)
+      alert("Failed to process document.")
+    } finally {
+      setIsUploadingOCR(false)
+    }
   }
 
   return (
@@ -276,8 +373,17 @@ export default function PatientRegistrationPage() {
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-lg font-bold text-slate-900">Symptoms & Chief Complaint</h2>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-bold hover:bg-blue-100 transition-colors w-full sm:w-auto border border-blue-100">
-                  <Mic className="w-4 h-4" /> Start Voice Dictation
+                <button 
+                  onClick={startVoiceDictation}
+                  disabled={isTranscribing}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all w-full sm:w-auto border
+                    ${isRecording ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 
+                      isTranscribing ? 'bg-slate-100 text-slate-400 border-slate-200' :
+                      'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'}`}
+                >
+                  {isTranscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+                   isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {isTranscribing ? "Transcribing..." : isRecording ? "Stop Recording" : "Start Voice Dictation"}
                 </button>
               </div>
               <div className="space-y-1.5">
@@ -296,13 +402,30 @@ export default function PatientRegistrationPage() {
           {currentStep === 4 && (
             <div className="space-y-6 animate-fade-in">
               <h2 className="text-lg font-bold text-slate-900">Upload Reports (OCR)</h2>
-              <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer group">
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors mb-4">
-                  <UploadCloud className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold text-slate-900">Click to upload or drag & drop</h3>
-                <p className="text-sm text-slate-500 mt-1">Prescriptions, lab reports, or past medical records.</p>
-                <p className="text-xs text-slate-400 mt-2">Supports JPG, PNG, PDF</p>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                accept="image/*" 
+                className="hidden" 
+              />
+              <div 
+                onClick={() => !isUploadingOCR && fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer group
+                  ${isUploadingOCR ? 'border-slate-200 bg-slate-50' : 'border-slate-200 hover:border-blue-400 hover:bg-blue-50/50'}`}
+              >
+                {isUploadingOCR ? (
+                   <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
+                     <Loader2 className="w-6 h-6 animate-spin" />
+                   </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors mb-4">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                )}
+                <h3 className="font-semibold text-slate-900">{isUploadingOCR ? "Extracting text..." : "Click to upload prescription or report"}</h3>
+                <p className="text-sm text-slate-500 mt-1">Our Vision AI will extract vitals and medications automatically.</p>
+                <p className="text-xs text-slate-400 mt-2">Supports JPG, PNG</p>
               </div>
             </div>
           )}

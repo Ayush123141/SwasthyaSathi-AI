@@ -77,10 +77,12 @@ def create_app() -> FastAPI:
             "app": settings.app_name,
         }
 
-    # Mount API v1 routers
+    from app.api.v1 import auth, patients, visits, upload, reports
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(patients.router, prefix="/api/v1")
     app.include_router(visits.router, prefix="/api/v1")
+    app.include_router(upload.router, prefix="/api/v1")
+    app.include_router(reports.router, prefix="/api/v1")
 
     return app
 

@@ -71,10 +71,14 @@ export default function AIAssessmentPage() {
           </div>
         </div>
 
-        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm w-full sm:w-auto">
+        <a
+          href={`http://localhost:8000/api/v1/reports/pdf/test-visit-123`}
+          download
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-white border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm w-full sm:w-auto"
+        >
           <Download className="w-4 h-4" />
           Download PDF
-        </button>
+        </a>
       </div>
 
       {/* Primary Risk & Confidence Card */}
