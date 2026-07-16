@@ -36,32 +36,21 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r transition-all duration-300 ease-in-out flex-shrink-0 relative z-20",
-        collapsed ? "w-[68px]" : "w-64"
+        "flex flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex-shrink-0 relative z-20",
+        collapsed ? "w-[68px]" : "w-60"
       )}
-      style={{
-        background: "var(--bg-surface)",
-        borderColor: "var(--border-color)",
-      }}
     >
       {/* Logo */}
-      <div
-        className="flex items-center gap-3 p-5 border-b"
-        style={{ borderColor: "var(--border-color)" }}
-      >
-        <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-sm">
+      <div className="flex items-center gap-3 p-4 border-b border-slate-200 h-[61px]">
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
           <Heart className="w-4.5 h-4.5 text-white" />
         </div>
         {!collapsed && (
           <div className="animate-fade-in flex flex-col justify-center">
-            <h2
-              className="font-bold text-sm tracking-tight text-slate-900"
-            >
+            <h2 className="font-bold text-sm tracking-tight text-slate-900">
               SwasthyaSathi
             </h2>
-            <p
-              className="text-[10px] font-medium text-teal-600 uppercase tracking-wider mt-0.5"
-            >
+            <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mt-0.5">
               AI Platform
             </p>
           </div>
@@ -77,17 +66,12 @@ export default function Sidebar() {
             onClick={(e) => disabled && e.preventDefault()}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                 isActive && !disabled
-                  ? "bg-teal-500/10 text-teal-600 font-semibold"
-                  : "hover:bg-black/5",
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                 disabled && "opacity-40 cursor-not-allowed"
               )
-            }
-            style={({ isActive }) =>
-              isActive && !disabled
-                ? undefined
-                : { color: "var(--text-secondary)" }
             }
           >
             <Icon className="w-5 h-5 flex-shrink-0" />
@@ -97,26 +81,18 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile & Collapse */}
-      <div
-        className="p-4 mt-auto space-y-3"
-      >
+      <div className="p-3 border-t border-slate-200 bg-slate-50/50 space-y-2">
         {/* User */}
         {!collapsed && user && (
-          <div
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 bg-white/50 shadow-sm animate-fade-in transition-all hover:bg-white"
-          >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-inner">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-100 transition-colors cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
               {user.full_name?.charAt(0)?.toUpperCase() || "A"}
             </div>
             <div className="min-w-0 flex-1">
-              <p
-                className="text-xs font-bold text-slate-800 truncate"
-              >
+              <p className="text-sm font-semibold text-slate-900 truncate">
                 {user.full_name}
               </p>
-              <p
-                className="text-[10px] font-medium text-slate-500 capitalize"
-              >
+              <p className="text-xs text-slate-500 capitalize truncate">
                 {user.role?.replace("_", " ")}
               </p>
             </div>
@@ -127,19 +103,18 @@ export default function Sidebar() {
         <button
           onClick={logout}
           className={cn(
-            "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-semibold transition-colors hover:bg-rose-50 text-rose-600 border border-transparent hover:border-rose-100",
+            "flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-rose-50 text-slate-600 hover:text-rose-600",
             collapsed && "justify-center"
           )}
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <LogOut className="w-4.5 h-4.5 flex-shrink-0" />
           {!collapsed && <span>Sign Out</span>}
         </button>
 
         {/* Collapse Toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center w-full py-1.5 rounded-lg hover:bg-black/5 transition-colors"
-          style={{ color: "var(--text-muted)" }}
+          className="flex items-center justify-center w-full py-2 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors mt-2"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
