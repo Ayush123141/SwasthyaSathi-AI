@@ -97,13 +97,15 @@ export default function PatientRegistrationPage() {
         if (!assessData.success) throw new Error("Failed to generate assessment")
         
         setAssessment(assessData.data)
+        
+        // Only move to step 5 on success
+        setCurrentStep(5)
 
       } catch (err) {
         console.error("Assessment pipeline failed:", err)
-        alert("Failed to process the assessment through the backend API. Please ensure the backend is running and the Gemini API key is valid.")
+        alert("Failed to process the assessment through the backend API. Please check the console for errors.")
       } finally {
         setIsAssessing(false)
-        setCurrentStep(5)
       }
     } else {
       setCurrentStep((p) => Math.min(p + 1, steps.length))
