@@ -10,6 +10,8 @@ import DashboardPage from "@/pages/DashboardPage"
 import PatientsPage from "@/pages/PatientsPage"
 import PatientRegistrationPage from "@/pages/PatientRegistrationPage"
 import PatientDetailsPage from "@/pages/PatientDetailsPage"
+import AIAssessmentPage from "@/pages/AIAssessmentPage"
+import ReportsPage from "@/pages/ReportsPage"
 import AppLayout from "@/components/layout/AppLayout"
 
 /**
@@ -45,6 +47,8 @@ function App() {
         <Route path="patients" element={<PatientsPage />} />
         <Route path="patients/new" element={<PatientRegistrationPage />} />
         <Route path="patients/:id" element={<PatientDetailsPage />} />
+        <Route path="assessment" element={<AIAssessmentPage />} />
+        <Route path="reports" element={<ReportsPage />} />
       </Route>
 
       {/* Catch-all redirect */}
