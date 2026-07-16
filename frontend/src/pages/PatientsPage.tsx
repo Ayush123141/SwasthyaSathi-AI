@@ -13,7 +13,6 @@ import {
   Loader2,
 } from "lucide-react"
 import type { PatientListItem, RiskLevel } from "@/types"
-import { cn } from "@/lib/utils"
 import apiClient from "@/lib/api"
 
 import { Link } from "react-router-dom"
@@ -60,7 +59,7 @@ export default function PatientsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Patients Registry
           </h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">
@@ -72,7 +71,7 @@ export default function PatientsPage() {
 
         <Link
           to="/patients/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold tracking-wide hover:bg-slate-800 transition-all active:scale-[0.98] shadow-lg shadow-slate-900/20 w-full sm:w-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto"
         >
           <Plus className="w-4.5 h-4.5" />
           Register Patient
@@ -80,26 +79,26 @@ export default function PatientsPage() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 p-5 rounded-2xl border border-slate-200/60 bg-white shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-3 p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
         {/* Search */}
         <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, village, or ID..."
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all text-sm font-medium"
+            className="w-full pl-9 pr-4 py-2 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
           />
         </div>
 
         {/* Risk Filter */}
         <div className="relative min-w-[200px] group">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors z-10" />
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value as RiskLevel | "")}
-            className="w-full pl-11 pr-10 py-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 appearance-none cursor-pointer transition-all text-sm font-medium relative"
+            className="w-full pl-9 pr-10 py-2 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer transition-all text-sm"
           >
             <option value="">All Risk Levels</option>
             <option value="low">Low Risk</option>
@@ -112,112 +111,114 @@ export default function PatientsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-sm animate-fade-in flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-500" />
+        <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm animate-fade-in flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-500" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-slate-200/60 bg-white shadow-sm">
-          <Loader2 className="w-10 h-10 animate-spin text-teal-500 mb-4" />
-          <p className="text-sm font-medium text-slate-500">Loading patients from secure storage...</p>
-        </div>
-      ) : patients.length > 0 ? (
-        /* Patient List */
-        <div className="grid gap-4 animate-fade-in">
-          {patients.map((patient) => (
-            <PatientCard key={patient.id} patient={patient} />
-          ))}
-        </div>
-      ) : (
-        /* Empty State */
-        <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-slate-200/60 bg-white shadow-sm text-center px-4">
-          <div className="w-20 h-20 rounded-2xl bg-slate-50 flex items-center justify-center mb-6 border border-slate-100">
-            <Users className="w-10 h-10 text-slate-300" />
+      {/* Table / Empty State */}
+      <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
+            <p className="text-sm font-medium text-slate-500">Loading patients from secure storage...</p>
           </div>
-          <h3 className="text-xl font-bold mb-2 text-slate-900 tracking-tight">
-            No patients found
-          </h3>
-          <p className="text-sm mb-8 max-w-md text-slate-500 leading-relaxed font-medium">
-            {searchQuery || riskFilter
-              ? "We couldn't find any patients matching your current search or filters. Try adjusting them."
-              : "Your registry is empty. Register your first patient to start using the clinical decision support model."}
-          </p>
-          <Link
-            to="/patients/new"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 text-white text-sm font-bold hover:bg-teal-500 transition-all shadow-lg shadow-teal-600/20 active:scale-[0.98]"
-          >
-            <Plus className="w-5 h-5" />
-            Register New Patient
-          </Link>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** Individual patient card component */
-function PatientCard({ patient }: { patient: PatientListItem }) {
-  const riskBadgeClass = patient.risk_level
-    ? `risk-badge risk-${patient.risk_level}`
-    : ""
-
-  return (
-    <Link
-      to={`/patients/${patient.id}`}
-      className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-white transition-all duration-200 cursor-pointer group hover:shadow-md hover:border-teal-200"
-    >
-      <div className="flex items-center gap-4 min-w-0">
-        {/* Avatar */}
-        <div
-          className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0",
-            patient.gender === "female"
-              ? "bg-gradient-to-br from-pink-400 to-rose-500"
-              : "bg-gradient-to-br from-blue-400 to-indigo-500"
-          )}
-        >
-          {patient.full_name.charAt(0).toUpperCase()}
-        </div>
-
-        {/* Info */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-sm text-slate-800 group-hover:text-teal-600 transition-colors truncate">
-              {patient.full_name}
+        ) : patients.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                  <th className="px-6 py-4 font-semibold">Patient</th>
+                  <th className="px-6 py-4 font-semibold">Demographics</th>
+                  <th className="px-6 py-4 font-semibold">Village</th>
+                  <th className="px-6 py-4 font-semibold">Risk Level</th>
+                  <th className="px-6 py-4 font-semibold">Status</th>
+                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {patients.map((patient) => (
+                  <tr key={patient.id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-bold border border-slate-200">
+                          {patient.full_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="font-semibold text-sm text-slate-900">
+                          {patient.full_name}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {patient.age} yrs • <span className="capitalize">{patient.gender}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {patient.village || "Unknown"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {patient.risk_level ? (
+                        <span className={`risk-badge risk-${patient.risk_level}`}>
+                          {patient.risk_level === "high" || patient.risk_level === "emergency" ? (
+                            <AlertTriangle className="w-3 h-3" />
+                          ) : null}
+                          {patient.risk_level}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-2">
+                        {patient.pregnancy_status === "pregnant" && (
+                          <span className="px-2 py-1 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                            Pregnant ({patient.pregnancy_week}w)
+                          </span>
+                        )}
+                        {patient.pregnancy_status === "postpartum" && (
+                          <span className="px-2 py-1 rounded text-[10px] font-semibold bg-pink-50 text-pink-700 border border-pink-200">
+                            Postpartum
+                          </span>
+                        )}
+                        {!patient.pregnancy_status && <span className="text-sm text-slate-400">—</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Link
+                        to={`/patients/${patient.id}`}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        View Details
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+            <div className="w-16 h-16 rounded-xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-200">
+              <Users className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-bold mb-1 text-slate-900 tracking-tight">
+              No patients found
             </h3>
-            {patient.risk_level && (
-              <span className={riskBadgeClass}>
-                {patient.risk_level === "high" || patient.risk_level === "emergency" ? (
-                  <AlertTriangle className="w-3 h-3" />
-                ) : null}
-                {patient.risk_level}
-              </span>
-            )}
+            <p className="text-sm mb-6 max-w-sm text-slate-500 font-medium">
+              {searchQuery || riskFilter
+                ? "We couldn't find any patients matching your current search or filters."
+                : "Your registry is empty. Register your first patient to start using the system."}
+            </p>
+            <Link
+              to="/patients/new"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Register Patient
+            </Link>
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            {patient.age} yrs • {patient.gender} •{" "}
-            {patient.village || "Unknown village"} •{" "}
-            {patient.total_visits} visits
-          </p>
-        </div>
-      </div>
-
-      {/* Right details */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {patient.pregnancy_status === "pregnant" && (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-pink-50 text-pink-600 border border-pink-200">
-            🤰 Pregnant ({patient.pregnancy_week}w)
-          </span>
-        )}
-        {patient.pregnancy_status === "postpartum" && (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-200">
-            🍼 Postpartum
-          </span>
         )}
       </div>
-    </Link>
+    </div>
   )
 }
