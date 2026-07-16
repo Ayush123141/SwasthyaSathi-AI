@@ -61,73 +61,58 @@ export default function PatientRegistrationPage() {
 
   const handleNext = async () => {
     if (currentStep === 4) {
-      // Transitioning to Step 5: Trigger AI Assessment
       setIsAssessing(true)
       try {
-        // Since we may not have a real patient_id in this mockup form yet, 
-        // we'll simulate the AI payload processing for demonstration of Milestone 13
-        
-        // Simulate API call delay for the orchestrator
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        // Determine mock response based on input to show rule engine vs gemini
-        const isEmergency = parseInt(formData.sysBP) >= 160 || parseInt(formData.diaBP) >= 110
-        
-        if (isEmergency) {
-           setAssessment({
-            risk_level: "Critical",
-            confidence: 100,
-            clinical_summary: "Patient is experiencing a Hypertensive Crisis. Immediate medical intervention is required to prevent severe complications.",
-            triggered_rules: [
-              `Hypertensive Crisis: BP is ${formData.sysBP}/${formData.diaBP} mmHg (Threshold: 160/110).`
-            ],
-            risk_factors: ["Severely elevated blood pressure", "Pregnancy complications"],
-            recommended_action: "Refer immediately to CHC or District Hospital. Ensure patient rests in lateral position.",
-            follow_up_plan: ["Immediate transport", "Do not administer antihypertensives without prescription"],
-            guidelines: ["WHO Emergency Triage Assessment and Treatment (ETAT)"],
-            missing_information: [],
-            metadata: {
-              assessment_time: new Date().toISOString(),
-              ai_version: "Rule Engine v1.0 (Emergency Override)",
-              processing_time_sec: 0.15
-            }
+        // 1. Create Patient
+        const patientRes = await fetch('http://localhost:8000/api/v1/patients/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Hardcoding mock auth headers since this is a frontend without full auth state connected
+          body: JSON.stringify({
+            full_name: formData.name || "Unknown Patient",
+            age: parseInt(formData.age) || 30,
+            gender: formData.gender || "Female",
+            village: formData.village || "Unknown Village",
+            phone: "0000000000",
+            pregnancy_status: "not_pregnant"
           })
-        } else {
-          setAssessment({
-            risk_level: "High",
-            confidence: 92,
-            clinical_summary: "Patient presents with elevated blood pressure and potential neurological symptoms. These indicators suggest a high risk for hypertensive disorders, possibly Gestational Hypertension.",
-            triggered_rules: ["Elevated Systolic BP > 140 mmHg"],
-            risk_factors: ["Elevated BP", "Reported symptoms matching pre-eclampsia warning signs"],
-            recommended_action: "Refer to PHC Medical Officer for evaluation, including proteinuria testing.",
-            follow_up_plan: ["Monitor BP daily", "Advise on warning signs (severe headache, visual changes)"],
-            guidelines: ["National Health Mission Standard Protocols", "IMNCI Guidelines"],
-            missing_information: ["Urine protein results", "Fetal heart rate"],
-            metadata: {
-              assessment_time: new Date().toISOString(),
-              ai_version: "Gemini 2.5 Flash",
-              processing_time_sec: 2.34
-            }
-          })
-        }
-      } catch (err) {
-        // Graceful fallback
-        setAssessment({
-          risk_level: "Unknown",
-          confidence: 0,
-          clinical_summary: "AI processing temporarily unavailable due to network issues. Please rely on standard clinical guidelines.",
-          triggered_rules: [],
-          risk_factors: [],
-          recommended_action: "Consult PHC Medical Officer for assessment.",
-          follow_up_plan: ["Monitor vitals closely"],
-          guidelines: ["National Health Mission Standard Protocols"],
-          missing_information: [],
-          metadata: {
-            assessment_time: new Date().toISOString(),
-            ai_version: "Fallback",
-            processing_time_sec: 0.0
-          }
         })
+        const patientData = await patientRes.json()
+        if (!patientData.success) throw new Error("Failed to create patient")
+        const patientId = patientData.data.id
+
+        // 2. Create Visit
+        const visitRes = await fetch('http://localhost:8000/api/v1/visits/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patient_id: patientId,
+            visit_type: "routine",
+            vitals: {
+              blood_pressure: `${formData.sysBP}/${formData.diaBP}`,
+              heart_rate: parseInt(formData.heartRate) || null,
+              temperature: parseFloat(formData.temperature) || null,
+              spo2: parseInt(formData.spo2) || null
+            },
+            symptoms: [formData.symptoms]
+          })
+        })
+        const visitData = await visitRes.json()
+        if (!visitData.success) throw new Error("Failed to create visit")
+        const visitId = visitData.data.id
+
+        // 3. Trigger AI Assessment
+        const assessRes = await fetch(`http://localhost:8000/api/v1/visits/${visitId}/assess`, {
+          method: 'POST'
+        })
+        const assessData = await assessRes.json()
+        if (!assessData.success) throw new Error("Failed to generate assessment")
+        
+        setAssessment(assessData.data)
+
+      } catch (err) {
+        console.error("Assessment pipeline failed:", err)
+        alert("Failed to process the assessment through the backend API. Please ensure the backend is running and the Gemini API key is valid.")
       } finally {
         setIsAssessing(false)
         setCurrentStep(5)

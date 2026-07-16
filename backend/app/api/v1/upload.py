@@ -23,12 +23,7 @@ async def upload_voice(file: UploadFile = File(...)):
     api_key = settings.gemini_api_key
     
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        # Graceful mockup if no API key
-        return ApiResponse(
-            success=True,
-            message="Voice processed successfully (Mocked)",
-            data={"transcription": "Patient reports severe headache and blurred vision for the past 2 days. Feeling dizzy."}
-        )
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing or invalid in .env file")
 
     try:
         audio_bytes = await file.read()
@@ -72,12 +67,7 @@ async def upload_voice(file: UploadFile = File(...)):
 
     except Exception as e:
         print(f"Error processing voice: {e}")
-        # Fallback if API fails
-        return ApiResponse(
-            success=True,
-            message="Voice processed successfully (Fallback)",
-            data={"transcription": "Patient reports severe headache and blurred vision for the past 2 days."}
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to process voice: {str(e)}")
 
 @router.post("/ocr", response_model=ApiResponse)
 async def upload_ocr(file: UploadFile = File(...)):
@@ -89,16 +79,7 @@ async def upload_ocr(file: UploadFile = File(...)):
     api_key = settings.gemini_api_key
     
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        # Graceful mockup if no API key
-        return ApiResponse(
-            success=True,
-            message="OCR processed successfully (Mocked)",
-            data={
-                "extracted_text": "Extracted from Mock Document.",
-                "vitals": {"blood_pressure": "140/90", "temperature": "99.1"},
-                "medications": ["Paracetamol 500mg"]
-            }
-        )
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing or invalid in .env file")
 
     try:
         img_bytes = await file.read()
@@ -159,13 +140,4 @@ async def upload_ocr(file: UploadFile = File(...)):
 
     except Exception as e:
         print(f"Error processing OCR: {e}")
-        # Fallback if API fails
-        return ApiResponse(
-            success=True,
-            message="OCR processed successfully (Fallback)",
-            data={
-                "extracted_text": "Failed to extract text. Network error.",
-                "vitals": {},
-                "medications": []
-            }
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to process OCR: {str(e)}")
