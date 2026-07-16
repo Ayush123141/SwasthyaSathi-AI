@@ -67,7 +67,7 @@ export default function PatientRegistrationPage() {
         const patientRes = await apiClient.post('/patients/', {
           full_name: formData.name || "Unknown Patient",
           age: parseInt(formData.age) || 30,
-          gender: formData.gender || "Female",
+          gender: (formData.gender || "female").toLowerCase(),
           village: formData.village || "Unknown Village",
           phone: "0000000000",
           pregnancy_status: "not_pregnant"
@@ -80,8 +80,9 @@ export default function PatientRegistrationPage() {
           patient_id: patientId,
           visit_type: "routine",
           vitals: {
-            blood_pressure: `${formData.sysBP}/${formData.diaBP}`,
-            heart_rate: parseInt(formData.heartRate) || null,
+            systolic_bp: parseInt(formData.sysBP) || null,
+            diastolic_bp: parseInt(formData.diaBP) || null,
+            pulse_rate: parseInt(formData.heartRate) || null,
             temperature: parseFloat(formData.temperature) || null,
             spo2: parseInt(formData.spo2) || null
           },
