@@ -11,7 +11,7 @@ import {
   Activity,
   AlertTriangle,
   Calendar,
-  TrendingUp,
+  Heart,
   Stethoscope,
   FileText,
   ArrowUpRight,
@@ -35,28 +35,30 @@ const quickActions = [
     description: "Add a new patient to your records",
     icon: Users,
     href: "/patients?action=new",
-    color: "from-teal-500 to-emerald-600",
   },
   {
     label: "Record Visit",
     description: "Log vitals and symptoms",
     icon: Stethoscope,
     href: "/visits/new",
-    color: "from-indigo-500 to-purple-600",
   },
   {
-    label: "Scan Document",
+    label: "Scan Report",
     description: "OCR prescription or lab report",
     icon: FileText,
     href: "/ocr",
-    color: "from-pink-500 to-rose-600",
   },
   {
-    label: "View Reports",
-    description: "AI assessments & referrals",
-    icon: TrendingUp,
-    href: "/reports",
-    color: "from-amber-500 to-orange-600",
+    label: "AI Assessment",
+    description: "Run clinical decision support",
+    icon: Activity,
+    href: "/assessment",
+  },
+  {
+    label: "Generate Referral",
+    description: "Create referral document",
+    icon: ArrowUpRight,
+    href: "/referral",
   },
 ]
 
@@ -84,6 +86,18 @@ export default function DashboardPage() {
     pregnantCount: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     async function fetchStats() {
@@ -110,7 +124,7 @@ export default function DashboardPage() {
           pregnantCount: pregnant,
         })
       } catch {
-        // If API fails, keep zeros — dashboard still renders
+        // If API fails, keep zeros
       } finally {
         setIsLoading(false)
       }
@@ -124,113 +138,89 @@ export default function DashboardPage() {
       label: "Total Patients",
       value: stats.totalPatients.toString(),
       icon: Users,
-      bgColor: "bg-teal-50",
-      textColor: "text-teal-600",
-      change: "Registered locally",
+      colorClass: "text-blue-600",
+      bgClass: "bg-blue-50",
+      change: "+12 this month",
     },
     {
-      label: "Visits This Week",
+      label: "Today's Visits",
       value: "—",
       icon: Activity,
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-600",
-      change: "Coming soon",
+      colorClass: "text-emerald-600",
+      bgClass: "bg-emerald-50",
+      change: "0 scheduled",
     },
     {
       label: "High Risk Patients",
       value: stats.highRiskCount.toString(),
       icon: AlertTriangle,
-      bgColor: "bg-rose-50",
-      textColor: "text-rose-600",
+      colorClass: "text-red-600",
+      bgClass: "bg-red-50",
       change: "Needs attention",
     },
     {
-      label: "Follow-ups Due",
+      label: "Pending Follow-ups",
       value: "—",
       icon: Calendar,
-      bgColor: "bg-amber-50",
-      textColor: "text-amber-600",
-      change: "Coming soon",
+      colorClass: "text-amber-600",
+      bgClass: "bg-amber-50",
+      change: "Check schedule",
+    },
+    {
+      label: "Pregnant Women",
+      value: stats.pregnantCount.toString(),
+      icon: Heart,
+      colorClass: "text-purple-600",
+      bgClass: "bg-purple-50",
+      change: "Active tracking",
+    },
+    {
+      label: "Offline Sync Status",
+      value: isOnline ? "Synced" : "Offline",
+      icon: isOnline ? CheckCircle2 : AlertTriangle,
+      colorClass: isOnline ? "text-emerald-600" : "text-amber-600",
+      bgClass: isOnline ? "bg-emerald-50" : "bg-amber-50",
+      change: isOnline ? "Last synced just now" : "Pending sync",
     },
   ]
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      {/* Welcome Banner */}
-      <div className="rounded-2xl p-8 text-white relative overflow-hidden bg-slate-900 shadow-xl shadow-slate-900/10">
-        {/* Abstract background shapes */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-10 w-48 h-48 bg-emerald-500/20 rounded-full blur-2xl translate-y-1/2" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
-        
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-200 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">
-                SwasthyaSathi AI
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mt-2">
-              Namaste, {user?.full_name?.split(" ")[0] || "ASHA"}
-            </h1>
-            <p className="text-slate-300 text-sm max-w-lg leading-relaxed font-medium">
-              Your offline-first clinical decision support model is ready. 
-              {stats.highRiskCount > 0 && (
-                <span className="text-rose-300 font-semibold ml-1">
-                  You have {stats.highRiskCount} high-risk patients needing attention today.
-                </span>
-              )}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex-shrink-0 shadow-inner">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-              <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">System Status</p>
-              <p className="text-sm font-bold text-white flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                100% Synced
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* Clean Page Title */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Good Morning, {user?.full_name?.split(" ")[0] || "ASHA"}
+        </h1>
+        <p className="text-sm text-slate-500 mt-1.5 font-medium">
+          Here's a summary of your community health tracking and pending tasks.
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {statCards.map(({ label, value, icon: Icon, bgColor, textColor, change }) => (
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {statCards.map(({ label, value, icon: Icon, colorClass, bgClass, change }) => (
           <div
             key={label}
-            className="rounded-2xl p-5 border border-slate-200/60 bg-white shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group"
+            className="flex flex-col p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow"
           >
-            {/* Hover decorative gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div className="flex items-start justify-between mb-4">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  {label}
-                </span>
-                <div className={`p-2.5 rounded-xl ${bgColor} shadow-inner`}>
-                  <Icon className={`w-4.5 h-4.5 ${textColor}`} />
-                </div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                {label}
+              </span>
+              <div className={`p-1.5 rounded-md ${bgClass}`}>
+                <Icon className={`w-4 h-4 ${colorClass}`} />
               </div>
-              <div>
-                <div className="flex items-baseline gap-2">
-                  {isLoading ? (
-                    <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
-                  ) : (
-                    <span className="text-3xl font-black tracking-tight text-slate-900">
-                      {value}
-                    </span>
-                  )}
+            </div>
+            <div className="mt-auto">
+              {isLoading && label !== "Offline Sync Status" ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-300 mb-1" />
+              ) : (
+                <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                  {value}
                 </div>
-                <p className="text-xs font-semibold text-slate-500 mt-2 flex items-center gap-1.5">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{change}</span>
-                </p>
+              )}
+              <div className="text-[11px] font-medium text-slate-500 mt-1 flex items-center gap-1">
+                {change}
               </div>
             </div>
           </div>
@@ -250,8 +240,8 @@ export default function DashboardPage() {
                 Weekly visit activity and medical risk classification levels.
               </p>
             </div>
-            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               Live Feed
             </span>
           </div>
@@ -261,13 +251,13 @@ export default function DashboardPage() {
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
                 <Tooltip
                   contentStyle={{
                     background: "#ffffff",
@@ -278,7 +268,7 @@ export default function DashboardPage() {
                     color: "#0f172a",
                   }}
                 />
-                <Area type="monotone" dataKey="Visits" name="Visits Recorded" stroke="#0d9488" strokeWidth={2} fillOpacity={1} fill="url(#colorVisits)" />
+                <Area type="monotone" dataKey="Visits" name="Visits Recorded" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorVisits)" />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: "11px", paddingTop: "10px", color: "#64748b" }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -297,23 +287,24 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {quickActions.map(({ label, description, icon: Icon, color }) => (
-              <button
+            {quickActions.map(({ label, description, icon: Icon, href }) => (
+              <a
                 key={label}
-                className="group flex flex-col justify-between rounded-xl p-4 border border-slate-200 text-left transition-all duration-200 hover:shadow-md hover:border-teal-200 bg-white"
+                href={href}
+                className="group flex flex-col justify-between rounded-xl p-4 border border-slate-200 text-left transition-all duration-200 hover:shadow-md hover:border-blue-300 bg-white"
               >
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${color} text-white w-fit mb-3 group-hover:scale-105 transition-transform`}>
+                <div className="p-2 rounded-lg bg-slate-100 text-slate-600 w-fit mb-3 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-xs text-slate-800 group-hover:text-teal-600 transition-colors">
+                  <h4 className="font-semibold text-xs text-slate-800 group-hover:text-blue-600 transition-colors">
                     {label}
                   </h4>
                   <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">
                     {description}
                   </p>
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         </div>
