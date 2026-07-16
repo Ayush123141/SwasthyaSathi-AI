@@ -22,8 +22,8 @@ async def upload_voice(file: UploadFile = File(...)):
     settings = get_settings()
     api_key = settings.gemini_api_key
     
-    if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        raise HTTPException(status_code=500, detail="Gemini API Key is missing or invalid in .env file")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing in .env file")
 
     try:
         audio_bytes = await file.read()
@@ -78,8 +78,8 @@ async def upload_ocr(file: UploadFile = File(...)):
     settings = get_settings()
     api_key = settings.gemini_api_key
     
-    if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        raise HTTPException(status_code=500, detail="Gemini API Key is missing or invalid in .env file")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing in .env file")
 
     try:
         img_bytes = await file.read()

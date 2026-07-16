@@ -1,5 +1,6 @@
 import { useState, useRef } from "react"
 import { useNavigate, Link } from "react-router-dom"
+import apiClient from "../lib/api"
 import { 
   ArrowLeft, 
   User, 
@@ -63,49 +64,35 @@ export default function PatientRegistrationPage() {
     if (currentStep === 4) {
       setIsAssessing(true)
       try {
-        // 1. Create Patient
-        const patientRes = await fetch('http://localhost:8000/api/v1/patients/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          // Hardcoding mock auth headers since this is a frontend without full auth state connected
-          body: JSON.stringify({
-            full_name: formData.name || "Unknown Patient",
-            age: parseInt(formData.age) || 30,
-            gender: formData.gender || "Female",
-            village: formData.village || "Unknown Village",
-            phone: "0000000000",
-            pregnancy_status: "not_pregnant"
-          })
+        const patientRes = await apiClient.post('/patients/', {
+          full_name: formData.name || "Unknown Patient",
+          age: parseInt(formData.age) || 30,
+          gender: formData.gender || "Female",
+          village: formData.village || "Unknown Village",
+          phone: "0000000000",
+          pregnancy_status: "not_pregnant"
         })
-        const patientData = await patientRes.json()
+        const patientData = patientRes.data
         if (!patientData.success) throw new Error("Failed to create patient")
         const patientId = patientData.data.id
 
-        // 2. Create Visit
-        const visitRes = await fetch('http://localhost:8000/api/v1/visits/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            patient_id: patientId,
-            visit_type: "routine",
-            vitals: {
-              blood_pressure: `${formData.sysBP}/${formData.diaBP}`,
-              heart_rate: parseInt(formData.heartRate) || null,
-              temperature: parseFloat(formData.temperature) || null,
-              spo2: parseInt(formData.spo2) || null
-            },
-            symptoms: [formData.symptoms]
-          })
+        const visitRes = await apiClient.post('/visits/', {
+          patient_id: patientId,
+          visit_type: "routine",
+          vitals: {
+            blood_pressure: `${formData.sysBP}/${formData.diaBP}`,
+            heart_rate: parseInt(formData.heartRate) || null,
+            temperature: parseFloat(formData.temperature) || null,
+            spo2: parseInt(formData.spo2) || null
+          },
+          symptoms: [formData.symptoms]
         })
-        const visitData = await visitRes.json()
+        const visitData = visitRes.data
         if (!visitData.success) throw new Error("Failed to create visit")
         const visitId = visitData.data.id
 
-        // 3. Trigger AI Assessment
-        const assessRes = await fetch(`http://localhost:8000/api/v1/visits/${visitId}/assess`, {
-          method: 'POST'
-        })
-        const assessData = await assessRes.json()
+        const assessRes = await apiClient.post(`/visits/${visitId}/assess`)
+        const assessData = assessRes.data
         if (!assessData.success) throw new Error("Failed to generate assessment")
         
         setAssessment(assessData.data)
@@ -157,11 +144,10 @@ export default function PatientRegistrationPage() {
         fd.append('file', audioBlob, 'dictation.webm')
         
         try {
-          const res = await fetch('http://localhost:8000/api/v1/upload/voice', {
-            method: 'POST',
-            body: fd
+          const res = await apiClient.post('/upload/voice', fd, {
+            headers: { 'Content-Type': 'multipart/form-data' }
           })
-          const data = await res.json()
+          const data = res.data
           if (data.success && data.data.transcription) {
             setFormData(prev => ({
               ...prev,
@@ -193,11 +179,10 @@ export default function PatientRegistrationPage() {
     fd.append('file', file)
     
     try {
-      const res = await fetch('http://localhost:8000/api/v1/upload/ocr', {
-        method: 'POST',
-        body: fd
+      const res = await apiClient.post('/upload/ocr', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
-      const data = await res.json()
+      const data = res.data
       if (data.success && data.data) {
         const d = data.data
         setFormData(prev => ({
