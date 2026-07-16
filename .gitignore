@@ -1,0 +1,83 @@
+# ==========================
+# Environment & Secrets
+# ==========================
+.env
+.env.local
+.env.production
+.env.*.local
+*.key
+
+# ==========================
+# Python / Backend
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+venv/
+.venv/
+env/
+.python-version
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# ML Models (large files)
+backend/ml/models/*.pkl
+backend/ml/models/*.joblib
+backend/ml/data/*.csv
+!backend/ml/models/.gitkeep
+!backend/ml/data/.gitkeep
+
+# Whisper & PaddleOCR cached models
+.paddleocr/
+*.onnx
+
+# FAISS indexes (generated)
+backend/guidelines/indexes/*.faiss
+backend/guidelines/indexes/*.pkl
+!backend/guidelines/indexes/.gitkeep
+
+# Uploaded files
+backend/uploads/
+backend/generated_reports/
+
+# ==========================
+# Node.js / Frontend
+# ==========================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# ==========================
+# IDE & OS
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# Vercel
+# ==========================
+.vercel/
+
+# ==========================
+# Misc
+# ==========================
+*.tmp
+*.temp
+*.bak
